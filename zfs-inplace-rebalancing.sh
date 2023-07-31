@@ -60,7 +60,23 @@ function rebalance () {
     # this shouldn't be needed in the typical case of `find` only finding files with links == 1
     # but this can run for a long time, so it's good to double check if something changed
     if [[ "${skip_hardlinks_flag,,}" == "true"* ]]; then
-        hardlink_count=$(stat -c "%h" "${file_path}")
+        if [[ "${OSTYPE,,}" == "linux-gnu"* ]]; then
+            # Linux
+
+            # -c -- format
+            # %h -- number of hardlinks
+            hardlink_count=$(stat -c "%h" "${file_path}")
+        elif [[ "${OSTYPE,,}" == "darwin"* ]] || [[ "${OSTYPE,,}" == "freebsd"* ]]; then
+            # Mac OS
+            # FreeBSD
+
+            # -f -- format
+            # %l -- number of hardlinks
+            hardlink_count=$(stat -f "%l" "${file_path}")
+        else
+            echo "Unsupported OS type: $OSTYPE"
+            exit 1
+        fi
 
         if [ "${hardlink_count}" -ge 2 ]; then
             echo "Skipping hard-linked file: ${file_path}"
